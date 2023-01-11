@@ -33,6 +33,10 @@ limitations under the License.
 #include "ringbuf.h"
 #include "micro_model_settings.h"
 
+// ESP-BOX AIoT Development Framework
+#include "bsp_board.h"
+#include "bsp_i2s.h"
+
 using namespace std;
 
 static const char* TAG = "TF_LITE_AUDIO_PROVIDER";
@@ -60,6 +64,14 @@ const int32_t kAudioCaptureBufferSize = 80000;
 const int32_t i2s_bytes_to_read = 3200;
 
 static void i2s_init(void) {
+  // Detects board and initializes the audic codec
+  // with ES7210 TDM mode disabled. 
+  bsp_board_init();
+  // We don't need established communication on port I2S_NUM_0.
+  bsp_i2s_deinit(I2S_NUM_0);
+  // Pin configuration of the detected board
+  const board_res_desc_t *brd = bsp_board_get_description();
+
   // Start listening for audio: MONO @ 16KHz
   i2s_config_t i2s_config = {
       .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX | I2S_MODE_TX),
@@ -75,10 +87,12 @@ static void i2s_init(void) {
       .fixed_mclk = -1,
   };
   i2s_pin_config_t pin_config = {
-      .bck_io_num = 26,    // IIS_SCLK
-      .ws_io_num = 32,     // IIS_LCLK
-      .data_out_num = -1,  // IIS_DSIN
-      .data_in_num = 33,   // IIS_DOUT
+      // pin 
+      .mck_io_num = brd->GPIO_I2S_MCLK,
+      .bck_io_num = brd->GPIO_I2S_SCLK,
+      .ws_io_num = brd->GPIO_I2S_LRCK,
+      .data_out_num = brd->GPIO_I2S_DOUT,
+      .data_in_num = brd->GPIO_I2S_SDIN,
   };
   esp_err_t ret = 0;
   ret = i2s_driver_install((i2s_port_t)1, &i2s_config, 0, NULL);
@@ -94,6 +108,7 @@ static void i2s_init(void) {
   if (ret != ESP_OK) {
     ESP_LOGE(TAG, "Error in initializing dma buffer with 0");
   }
+
 }
 
 static void CaptureSamples(void* arg) {

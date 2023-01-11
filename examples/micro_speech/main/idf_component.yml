@@ -1,0 +1,16 @@
+dependencies:
+  # Required IDF version
+  idf: ">=4.4.3"
+
+  # Define dependencies for components in git repository:
+  #
+  # ESP-BOX AIoT Development Framework
+  bsp:
+    path: components/bsp
+    git: https://github.com/espressif/esp-box.git
+  i2c_bus:
+    path: components/i2c_bus
+    git: https://github.com/espressif/esp-box.git
+  i2c_devices:
+    path: components/i2c_devices
+    git: https://github.com/espressif/esp-box.git
